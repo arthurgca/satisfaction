@@ -28,6 +28,8 @@
  */
 
 
+use GlpiPlugin\Satisfaction\Menu;
+use GlpiPlugin\Satisfaction\Survey;
 
 Session::checkLoginUser();
 
@@ -35,7 +37,7 @@ if (!isset($_GET["id"])) {
     $_GET["id"] = "";
 }
 
-$survey = new PluginSatisfactionSurvey();
+$survey = new Survey();
 
 if (isset($_POST["add"])) {
     $survey->check(-1, CREATE, $_POST);
@@ -52,7 +54,7 @@ if (isset($_POST["add"])) {
 } else {
     $survey->checkGlobal(READ);
 
-    Html::header(PluginSatisfactionSurvey::getTypeName(2), '', "admin", "pluginsatisfactionmenu", "survey");
+    Html::header(Survey::getTypeName(2), '', "admin", Menu::class, "survey");
 
     $survey->display(['id' => $_GET['id']]);
 

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * @version $Id: HEADER 15930 2011-10-30 15:47:55Z tsmr $
  -------------------------------------------------------------------------
@@ -27,25 +28,30 @@
  --------------------------------------------------------------------------
  */
 
-/**
- * Class PluginSatisfactionMenu
- */
-class PluginSatisfactionMenu extends CommonGLPI
-{
-    static $rightname = 'plugin_satisfaction';
+namespace GlpiPlugin\Satisfaction;
 
-   /**
-    * @return translated
-    */
-    static function getMenuName()
+use CommonGLPI;
+use Session;
+
+/**
+ * Class Menu
+ */
+class Menu extends CommonGLPI
+{
+    public static $rightname = 'plugin_satisfaction';
+
+    /**
+     * @return string
+     */
+    public static function getMenuName()
     {
         return __('Satisfaction survey', 'satisfaction');
     }
 
-   /**
-    * @return array
-    */
-    static function getMenuContent()
+    /**
+     * @return array
+     */
+    public static function getMenuContent()
     {
 
         $menu = [];
@@ -53,11 +59,10 @@ class PluginSatisfactionMenu extends CommonGLPI
         if (Session::haveRight('plugin_satisfaction', READ)) {
             $web_dir = '/plugins/satisfaction';
             $menu['title']           = self::getMenuName();
-            $menu['page']            = $web_dir."/front/survey.php";
-            $menu['page']            = $web_dir."/front/survey.php";
-            $menu['links']['search'] = PluginSatisfactionSurvey::getSearchURL(false);
-            if (PluginSatisfactionSurvey::canCreate()) {
-                $menu['links']['add'] = PluginSatisfactionSurvey::getFormURL(false);
+            $menu['page']            = $web_dir . "/front/survey.php";
+            $menu['links']['search'] = Survey::getSearchURL(false);
+            if (Survey::canCreate()) {
+                $menu['links']['add'] = Survey::getFormURL(false);
             }
         }
 
@@ -66,18 +71,18 @@ class PluginSatisfactionMenu extends CommonGLPI
         return $menu;
     }
 
-    static function getIcon()
+    public static function getIcon()
     {
         return "ti ti-thumb-up";
     }
 
-    static function removeRightsFromSession()
+    public static function removeRightsFromSession()
     {
-        if (isset($_SESSION['glpimenu']['admin']['types']['PluginSatisfactionMenu'])) {
-            unset($_SESSION['glpimenu']['admin']['types']['PluginSatisfactionMenu']);
+        if (isset($_SESSION['glpimenu']['admin']['types'][Menu::class])) {
+            unset($_SESSION['glpimenu']['admin']['types'][Menu::class]);
         }
-        if (isset($_SESSION['glpimenu']['admin']['content']['pluginsatisfactionmenu'])) {
-            unset($_SESSION['glpimenu']['admin']['content']['pluginsatisfactionmenu']);
+        if (isset($_SESSION['glpimenu']['admin']['content'][Menu::class])) {
+            unset($_SESSION['glpimenu']['admin']['content'][Menu::class]);
         }
     }
 }

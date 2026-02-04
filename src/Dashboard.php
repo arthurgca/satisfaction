@@ -27,17 +27,24 @@
  --------------------------------------------------------------------------
  */
 
+namespace GlpiPlugin\Satisfaction;
+
+use AllowDynamicProperties;
+use CommonGLPI;
+use Dropdown;
 use GlpiPlugin\Mydashboard\Datatable;
 use GlpiPlugin\Mydashboard\Helper;
 use GlpiPlugin\Mydashboard\Html as MydashboardHtml;
 use GlpiPlugin\Mydashboard\Menu;
 use GlpiPlugin\Mydashboard\Widget;
+use Html;
+use TicketSatisfaction;
 
 /**
- * Class PluginSatisfactionDashboard
+ * Class Dashboard
  */
 #[AllowDynamicProperties]
-class PluginSatisfactionDashboard extends CommonGLPI
+class Dashboard extends CommonGLPI
 {
     // Widget identifiers
     const SATISFACTION_SURVEY = 1;
@@ -160,7 +167,7 @@ class PluginSatisfactionDashboard extends CommonGLPI
     /**
      * @param $widgetId
      *
-     * @return \Datatable
+     * @return MydashboardHtml
      */
     public function getWidgetContentForItem($widgetId, $opt = [])
     {
@@ -200,8 +207,8 @@ class PluginSatisfactionDashboard extends CommonGLPI
         $content = "";
 
         // Recover survey associed to current entity
-        $pluginSatisfactionSurvey = new PluginSatisfactionSurvey();
-        if (!$pluginSatisfactionSurvey->getFromDBByCrit([
+        $Survey = new Survey();
+        if (!$Survey->getFromDBByCrit([
            'entities_id' => $_SESSION['glpiactive_entity'],
            'is_active' => 1
         ])) {

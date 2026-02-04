@@ -27,17 +27,27 @@
  --------------------------------------------------------------------------
  */
 
+namespace GlpiPlugin\Satisfaction;
+
+use Ajax;
+use CommonDBChild;
+use CommonGLPI;
+use Dropdown;
+use Html;
+use Log;
+use Session;
+use Toolbox;
 
 if (!defined('GLPI_ROOT')) {
     die("Sorry. You can't access this file directly");
 }
 
-include(dirname(__FILE__)."/surveytranslation.dao.php");
+include(dirname(__FILE__)."/SurveyTranslationDAO.php");
 
 /**
- * PluginSatisfactionSurveyTranslation Class
+ * SurveyTranslation Class
  **/
-class PluginSatisfactionSurveyTranslation extends CommonDBChild
+class SurveyTranslation extends CommonDBChild
 {
 
     public static $itemtype = 'itemtype';
@@ -76,7 +86,7 @@ class PluginSatisfactionSurveyTranslation extends CommonDBChild
     *
     * @since version 0.84
     *
-    * @return an array of massive actions
+    * @return array array of massive actions
     **/
     public function getForbiddenStandardMassiveAction()
     {
@@ -91,25 +101,25 @@ class PluginSatisfactionSurveyTranslation extends CommonDBChild
     * It be translated if translation if globally on and item is an instance of CommonDropdown
     * or CommonTreeDropdown and if translation is enabled for this class
     *
-    * @param $item the item to check
+    * @param $item
     *
     * @return true if item can be translated, false otherwise
     **/
     public static function canBeTranslated(CommonGLPI $item)
     {
-        return $item instanceof PluginSatisfactionSurvey && $item->maybeTranslated();
+        return $item instanceof Survey && $item->maybeTranslated();
     }
 
    /**
     * Return the number of translations for an item
     *
-    * @param item
+    * @param
     *
     * @return the number of translations for this item
     **/
     public static function getNumberOfTranslationsForItem($item)
     {
-        return PluginSatisfactionSurveyTranslationDAO::countSurveyTranslationByCrit([
+        return SurveyTranslationDAO::countSurveyTranslationByCrit([
             "plugin_satisfaction_surveys_id" => $item->getID()]);
     }
 
@@ -121,8 +131,8 @@ class PluginSatisfactionSurveyTranslation extends CommonDBChild
     public static function displayTabContentForItem(CommonGLPI $item, $tabnum = 1, $withtemplate = 0)
     {
 
-        if (PluginSatisfactionSurveyTranslation::canBeTranslated($item)) {
-            PluginSatisfactionSurveyTranslation::showTranslations($item);
+        if (SurveyTranslation::canBeTranslated($item)) {
+            SurveyTranslation::showTranslations($item);
         }
         return true;
     }
@@ -134,12 +144,12 @@ class PluginSatisfactionSurveyTranslation extends CommonDBChild
     *
     * @return true;
     **/
-    public static function showTranslations(PluginSatisfactionSurvey $item)
+    public static function showTranslations(Survey $item)
     {
         global $CFG_GLPI;
 
        // Get all translation from database
-        $items = PluginSatisfactionSurveyTranslationDAO::getSurveyTranslationByCrit([
+        $items = SurveyTranslationDAO::getSurveyTranslationByCrit([
             "plugin_satisfaction_surveys_id" => $item->getID()]);
 
         $rand    = mt_rand();
@@ -147,17 +157,17 @@ class PluginSatisfactionSurveyTranslation extends CommonDBChild
         $target = PLUGINSATISFACTION_WEBDIR."/ajax/surveytranslation.form.php";
 
         if ($canedit) {
-            echo "<div id='viewtranslation" . $item->getType().$item->getID() . "$rand'></div>\n";
+            echo "<div id='viewtranslation" . $item->getID() . "$rand'></div>\n";
 
             echo "<script type='text/javascript' >\n";
-            echo "function addTranslation" . $item->getType().$item->getID() . "$rand() {\n";
+            echo "function addTranslation" . $item->getID() . "$rand() {\n";
             $params = [
             'id' => -1,
             'survey_id' => $item->getID(),
             'action' => 'GET'
             ];
             Ajax::updateItemJsCode(
-                "viewtranslation" . $item->getType().$item->getID() . "$rand",
+                "viewtranslation" . $item->getID() . "$rand",
                 $target,
                 $params
             );
@@ -165,7 +175,7 @@ class PluginSatisfactionSurveyTranslation extends CommonDBChild
             echo "</script>\n";
             echo "<div class='center'>".
              "<a class='submit btn btn-primary' href='javascript:addTranslation".
-             $item->getType().$item->getID()."$rand();'>". __('Add a new translation').
+             $item->getID()."$rand();'>". __('Add a new translation').
              "</a></div><br>";
         }
 
@@ -173,8 +183,8 @@ class PluginSatisfactionSurveyTranslation extends CommonDBChild
            // ** MASS ACTION **
            // TODO Remove edit action
             if ($canedit) {
-                Html::openMassiveActionsForm('mass'.__CLASS__.$rand);
-                $massiveactionparams = ['item' => __CLASS__, 'container' => 'mass'.__CLASS__.$rand];
+                Html::openMassiveActionsForm('mass_satisfaction'.$rand);
+                $massiveactionparams = ['item' => __CLASS__, 'container' => 'mass_satisfaction'.$rand];
                 Html::showMassiveActions($massiveactionparams);
             }
            // ** MASS ACTION **
@@ -223,7 +233,7 @@ class PluginSatisfactionSurveyTranslation extends CommonDBChild
                     'action' => 'GET'
                     ];
                     Ajax::updateItemJsCode(
-                        "viewtranslation" . $item->getType().$item->getID() . "$rand",
+                        "viewtranslation" . $item->getID() . "$rand",
                         PLUGINSATISFACTION_WEBDIR."/ajax/surveytranslation.form.php",
                         $params
                     );
@@ -233,7 +243,7 @@ class PluginSatisfactionSurveyTranslation extends CommonDBChild
                 echo Dropdown::getLanguageName($data['language']);
                 echo "</td>";
 
-                $surveyQuestion = new PluginSatisfactionSurveyQuestion();
+                $surveyQuestion = new SurveyQuestion();
                 $surveyQuestion->getFromDB($data['glpi_plugin_satisfaction_surveyquestions_id']);
 
                 echo "<td $tdAttributes>".$surveyQuestion->getName()."</td>";
@@ -242,7 +252,7 @@ class PluginSatisfactionSurveyTranslation extends CommonDBChild
             }
            // ** ROWS **
             echo "</table>";
-
+            echo "</div>";
            // ** MASS ACTION **
             if ($canedit) {
                 $massiveactionparams['ontop'] = false;
@@ -262,7 +272,7 @@ class PluginSatisfactionSurveyTranslation extends CommonDBChild
         global $CFG_GLPI;
         $surveyId = Toolbox::cleanInteger($options['survey_id']);
 
-        $item = new PluginSatisfactionSurvey();
+        $item = new Survey();
         $item->getFromDB($surveyId);
 
         if ($options['id'] > 0) {
@@ -280,9 +290,9 @@ class PluginSatisfactionSurveyTranslation extends CommonDBChild
        // Edit Translation
         if ($options['id'] > 0) {
             echo Html::hidden('action', ['value' => 'EDIT']);
-            $surveyTranslationData = PluginSatisfactionSurveyTranslationDAO::getSurveyTranslationByID($options['id']);
+            $surveyTranslationData = SurveyTranslationDAO::getSurveyTranslationByID($options['id']);
 
-            $surveyQuestion = new PluginSatisfactionSurveyQuestion();
+            $surveyQuestion = new SurveyQuestion();
             $surveyQuestion->getFromDB($surveyTranslationData['glpi_plugin_satisfaction_surveyquestions_id']);
 
            // Language
@@ -366,7 +376,7 @@ class PluginSatisfactionSurveyTranslation extends CommonDBChild
     public function getQuestionDropdown($surveyId)
     {
 
-        $item = new PluginSatisfactionSurveyQuestion();
+        $item = new SurveyQuestion();
         $datas = $item->find(['plugin_satisfaction_surveys_id' => $surveyId]);
 
         $temp = [];
@@ -422,7 +432,7 @@ class PluginSatisfactionSurveyTranslation extends CommonDBChild
         ];
 
        // Translation already exist
-        if (PluginSatisfactionSurveyTranslationDAO::countSurveyTranslationByCrit($crit)) {
+        if (SurveyTranslationDAO::countSurveyTranslationByCrit($crit)) {
             Session::addMessageAfterRedirect(
                 sprintf(__(
                     "An %s translation for this Question already exist.",
@@ -432,7 +442,7 @@ class PluginSatisfactionSurveyTranslation extends CommonDBChild
                 WARNING
             );
         } else {  // Translation ready to insert
-            $newInsertId = PluginSatisfactionSurveyTranslationDAO::newSurveyTranslation(
+            $newInsertId = SurveyTranslationDAO::newSurveyTranslation(
                 $options['survey_id'],
                 $options['question_id'],
                 $options['language'],
@@ -449,7 +459,7 @@ class PluginSatisfactionSurveyTranslation extends CommonDBChild
                     ];
                     Log::history(
                         $options['survey_id'],
-                        PluginSatisfactionSurvey::class,
+                        Survey::class,
                         $changes,
                         $this->getType(),
                         static::$log_history_add
@@ -469,7 +479,7 @@ class PluginSatisfactionSurveyTranslation extends CommonDBChild
         ];
 
         // Translation doesn't exist
-        if (!PluginSatisfactionSurveyTranslationDAO::countSurveyTranslationByCrit($crit)) {
+        if (!SurveyTranslationDAO::countSurveyTranslationByCrit($crit)) {
             Session::addMessageAfterRedirect(
                 __("The translation you want to edit does not exist.", "satisfaction"),
                 true,
@@ -478,9 +488,9 @@ class PluginSatisfactionSurveyTranslation extends CommonDBChild
         }
         // Translation ready to update
         else {
-            $surveyTranslationData = PluginSatisfactionSurveyTranslationDAO::getSurveyTranslationByID($options['id']);
+            $surveyTranslationData = SurveyTranslationDAO::getSurveyTranslationByID($options['id']);
 
-            PluginSatisfactionSurveyTranslationDAO::editSurveyTranslation($options['id'], $options['value']);
+            SurveyTranslationDAO::editSurveyTranslation($options['id'], $options['value']);
 
             Session::addMessageAfterRedirect(__("Translation successfully edited.", "satisfaction"), true, INFO);
 
@@ -492,7 +502,7 @@ class PluginSatisfactionSurveyTranslation extends CommonDBChild
                 ];
                 Log::history(
                     $options['survey_id'],
-                    PluginSatisfactionSurvey::class,
+                    Survey::class,
                     $changes,
                     $this->getType(),
                     static::$log_history_update
@@ -503,7 +513,7 @@ class PluginSatisfactionSurveyTranslation extends CommonDBChild
 
     public static function hasTranslation($surveyId, $questionId)
     {
-        return PluginSatisfactionSurveyTranslationDAO::countSurveyTranslationByCrit([
+        return SurveyTranslationDAO::countSurveyTranslationByCrit([
          'plugin_satisfaction_surveys_id' => $surveyId,
          'glpi_plugin_satisfaction_surveyquestions_id' => $questionId,
          'language' => $_SESSION['glpilanguage']
@@ -519,7 +529,7 @@ class PluginSatisfactionSurveyTranslation extends CommonDBChild
          'language' => $_SESSION['glpilanguage']
         ];
 
-        $translationList = PluginSatisfactionSurveyTranslationDAO::getSurveyTranslationByCrit($crit);
+        $translationList = SurveyTranslationDAO::getSurveyTranslationByCrit($crit);
         $translation = array_pop($translationList);
 
         return $translation['value'];

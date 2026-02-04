@@ -1,4 +1,5 @@
 <?php
+
 /*
  * @version $Id: HEADER 15930 2011-10-30 15:47:55Z tsmr $
  -------------------------------------------------------------------------
@@ -27,14 +28,14 @@
  --------------------------------------------------------------------------
  */
 
+namespace GlpiPlugin\Satisfaction;
 
 if (!defined('GLPI_ROOT')) {
     die("Sorry. You can't access this file directly");
 }
 
-class PluginSatisfactionSurveyTranslationDAO
+class SurveyTranslationDAO
 {
-
     public static $tablename = "glpi_plugin_satisfaction_surveytranslations";
 
     public static function getSurveyTranslationByCrit($crit = [])
@@ -42,19 +43,19 @@ class PluginSatisfactionSurveyTranslationDAO
         global $DB;
         $datas = [];
 
-        $query = "SELECT * FROM `".self::$tablename."`";
+        $query = "SELECT * FROM `" . self::$tablename . "`";
         if (!empty($crit)) {
             $it = 0;
             foreach ($crit as $key => $value) {
                 if ($it == 0) {
-                    $query.= " WHERE ";
+                    $query .= " WHERE ";
                 } else {
-                    $query.= " AND ";
+                    $query .= " AND ";
                 }
                 if (is_string($value)) {
-                    $query.= "`$key` = '".$value."'";
+                    $query .= "`$key` = '" . $value . "'";
                 } else {
-                    $query.= "`$key` = ".$value;
+                    $query .= "`$key` = " . $value;
                 }
                 $it++;
             }
@@ -72,19 +73,19 @@ class PluginSatisfactionSurveyTranslationDAO
     {
         global $DB;
 
-        $query = "SELECT count(*) as nb FROM `".self::$tablename."`";
+        $query = "SELECT count(*) as nb FROM `" . self::$tablename . "`";
         if (!empty($crit)) {
             $it = 0;
             foreach ($crit as $key => $value) {
                 if ($it == 0) {
-                    $query.= " WHERE ";
+                    $query .= " WHERE ";
                 } else {
-                    $query.= " AND ";
+                    $query .= " AND ";
                 }
                 if (is_string($value)) {
-                    $query.= "`$key` = '".$value."'";
+                    $query .= "`$key` = '" . $value . "'";
                 } else {
-                    $query.= "`$key` = ".$value;
+                    $query .= "`$key` = " . $value;
                 }
 
                 $it++;
@@ -102,8 +103,8 @@ class PluginSatisfactionSurveyTranslationDAO
     {
         global $DB;
 
-        $query = "SELECT * FROM `".self::$tablename."`";
-        $query .=" WHERE `id` = ".$ID;
+        $query = "SELECT * FROM `" . self::$tablename . "`";
+        $query .= " WHERE `id` = " . $ID;
 
         $result = $DB->doQuery($query);
         while ($data = $DB->fetchAssoc($result)) {
@@ -115,10 +116,10 @@ class PluginSatisfactionSurveyTranslationDAO
     {
         global $DB;
 
-        $query = "INSERT INTO `".self::$tablename."`";
+        $query = "INSERT INTO `" . self::$tablename . "`";
         $query .= " (
         `plugin_satisfaction_surveys_id`, `glpi_plugin_satisfaction_surveyquestions_id`, `language`, `value`)";
-        $query .= " VALUES(".$surveyId.",".$questionId.",'".$language."','".$value."')";
+        $query .= " VALUES(" . $surveyId . "," . $questionId . ",'" . $language . "','" . $value . "')";
 
         if ($DB->doQuery($query)) {
             return $DB->insertId();
@@ -131,9 +132,9 @@ class PluginSatisfactionSurveyTranslationDAO
     {
         global $DB;
 
-        $query = "UPDATE `".self::$tablename."`";
-        $query .= " SET `value` = '".$value."'";
-        $query .= " WHERE `id` = ".$id;
+        $query = "UPDATE `" . self::$tablename . "`";
+        $query .= " SET `value` = '" . $value . "'";
+        $query .= " WHERE `id` = " . $id;
 
         return ($DB->doQuery($query));
     }

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * @version $Id: HEADER 15930 2011-10-30 15:47:55Z tsmr $
  -------------------------------------------------------------------------
@@ -27,80 +28,89 @@
  --------------------------------------------------------------------------
  */
 
+namespace GlpiPlugin\Satisfaction;
+
+use CommonDBTM;
+use DbUtils;
+use Dropdown;
+use Entity;
+use Html;
+use Log;
+use MassiveAction;
+use Session;
 
 if (!defined('GLPI_ROOT')) {
     die("Sorry. You can't access this file directly");
 }
 
 /**
- * Class PluginSatisfactionSurvey
+ * Class Survey
  */
-class PluginSatisfactionSurvey extends CommonDBTM
+class Survey extends CommonDBTM
 {
-
     public static $rightname = "plugin_satisfaction";
     public $dohistory = true;
 
     public $can_be_translated = true;
 
-   /**
-    * Return the localized name of the current Type
-    * Should be overloaded in each new class
-    *
-    * @return string
-    **/
+    /**
+     * Return the localized name of the current Type
+     * Should be overloaded in each new class
+     *
+     * @return string
+     **/
     public static function getTypeName($nb = 0)
     {
         return _n('Satisfaction survey', 'Satisfaction surveys', $nb, 'satisfaction');
     }
     public static function getIcon()
     {
-        return PluginSatisfactionMenu::getIcon();
+        return Menu::getIcon();
     }
-   /**
-    * Define tabs to display
-    *
-    * NB : Only called for existing object
-    *
-    * @param $options array
-    *     - withtemplate is a template view ?
-    *
-    * @return array containing the onglets
-    **/
+    /**
+     * Define tabs to display
+     *
+     * NB : Only called for existing object
+     *
+     * @param $options array
+     *     - withtemplate is a template view ?
+     *
+     * @return array containing the onglets
+     **/
     public function defineTabs($options = [])
     {
 
         $ong = [];
         $this->addDefaultFormTab($ong);
-        $this->addStandardTab(PluginSatisfactionSurveyQuestion::class, $ong, $options);
-        $this->addStandardTab(PluginSatisfactionSurveyAnswer::class, $ong, $options);
-        $this->addStandardTab(PluginSatisfactionSurveyResult::class, $ong, $options);
-        $this->addStandardTab(PluginSatisfactionSurveyTranslation::class, $ong, $options);
-        $this->addStandardTab(PluginSatisfactionSurveyReminder::class, $ong, $options);
+        $this->addStandardTab(SurveyQuestion::class, $ong, $options);
+        $this->addStandardTab(SurveyAnswer::class, $ong, $options);
+        $this->addStandardTab(SurveyResult::class, $ong, $options);
+        $this->addStandardTab(SurveyTranslation::class, $ong, $options);
+        $this->addStandardTab(SurveyReminder::class, $ong, $options);
 
         $this->addStandardTab(Log::class, $ong, $options);
         return $ong;
     }
 
-   /**
-    * Is translation enabled for this itemtype
-    *
-    * @return true if translation is available, false otherwise
-    **/
+    /**
+     * Is translation enabled for this itemtype
+     *
+     * @return true if translation is available, false otherwise
+     **/
     public function maybeTranslated()
     {
         return $this->can_be_translated;
     }
 
-   /**
-    * Have I the right to "create" the Object
-    *
-    * Default is true and check entity if the objet is entity assign
-    *
-    * May be overloaded if needed
-    *
-    * @return boolean
-    **/
+    /**
+     * Have I the right to "create" the Object
+     *
+     * Default is true and check entity if the objet is entity assign
+     *
+     * May be overloaded if needed
+     *
+     * @return boolean
+     **/
     public function canCreateItem(): bool
     {
 
@@ -110,106 +120,106 @@ class PluginSatisfactionSurvey extends CommonDBTM
         return true;
     }
 
-   /**
-    * @return array
-    */
+    /**
+     * @return array
+     */
     public function rawSearchOptions()
     {
 
         $tab = [];
 
         $tab[] = [
-         'id'                 => 'common',
-         'name'               => self::getTypeName(2)
+            'id'                 => 'common',
+            'name'               => self::getTypeName(2),
         ];
 
         $tab[] = [
-         'id'                 => '1',
-         'table'              => $this->getTable(),
-         'field'              => 'name',
-         'name'               => __('Name'),
-         'datatype'           => 'itemlink',
-         'itemlink_type'      => $this->getType(),
-         'massiveaction'      => false
+            'id'                 => '1',
+            'table'              => $this->getTable(),
+            'field'              => 'name',
+            'name'               => __('Name'),
+            'datatype'           => 'itemlink',
+            'itemlink_type'      => $this->getType(),
+            'massiveaction'      => false,
         ];
 
         $tab[] = [
-         'id'                 => '2',
-         'table'              => $this->getTable(),
-         'field'              => 'is_active',
-         'name'               => __('Active'),
-         'datatype'           => 'bool'
+            'id'                 => '2',
+            'table'              => $this->getTable(),
+            'field'              => 'is_active',
+            'name'               => __('Active'),
+            'datatype'           => 'bool',
         ];
 
         $tab[] = [
-         'id'                 => '3',
-         'table'              => $this->getTable(),
-         'field'              => 'comment',
-         'name'               => __('Comments'),
-         'datatype'           => 'text'
+            'id'                 => '3',
+            'table'              => $this->getTable(),
+            'field'              => 'comment',
+            'name'               => __('Comments'),
+            'datatype'           => 'text',
         ];
 
         $tab[] = [
-         'id'                 => '4',
-         'table'              => $this->getTable(),
-         'field'              => 'date_mod',
-         'name'               => __('Last update'),
-         'massiveaction'      => false,
-         'datatype'           => 'datetime'
+            'id'                 => '4',
+            'table'              => $this->getTable(),
+            'field'              => 'date_mod',
+            'name'               => __('Last update'),
+            'massiveaction'      => false,
+            'datatype'           => 'datetime',
         ];
 
         $tab[] = [
-         'id'                 => '5',
-         'table'              => $this->getTable(),
-         'field'              => 'date_creation',
-         'name'               => __('Creation date'),
-         'datatype'           => 'date'
+            'id'                 => '5',
+            'table'              => $this->getTable(),
+            'field'              => 'date_creation',
+            'name'               => __('Creation date'),
+            'datatype'           => 'date',
         ];
 
         $tab[] = [
-         'id'                 => '11',
-         'table'              => $this->getTable(),
-         'field'              => 'is_recursive',
-         'name'               => __('Child entities'),
-         'datatype'           => 'bool'
+            'id'                 => '11',
+            'table'              => $this->getTable(),
+            'field'              => 'is_recursive',
+            'name'               => __('Child entities'),
+            'datatype'           => 'bool',
         ];
 
         $tab[] = [
-         'id'                 => '30',
-         'table'              => $this->getTable(),
-         'field'              => 'id',
-         'name'               => __('ID'),
-         'datatype'           => 'number'
+            'id'                 => '30',
+            'table'              => $this->getTable(),
+            'field'              => 'id',
+            'name'               => __('ID'),
+            'datatype'           => 'number',
         ];
 
         $tab[] = [
-         'id'                 => '80',
-         'table'              => 'glpi_entities',
-         'field'              => 'completename',
-         'name'               => __('Entity'),
-         'datatype'           => 'dropdown'
+            'id'                 => '80',
+            'table'              => 'glpi_entities',
+            'field'              => 'completename',
+            'name'               => __('Entity'),
+            'datatype'           => 'dropdown',
         ];
 
         $tab[] = [
-         'id'                 => '86',
-         'table'              => $this->getTable(),
-         'field'              => 'is_recursive',
-         'name'               => __('Child entities'),
-         'datatype'           => 'bool'
+            'id'                 => '86',
+            'table'              => $this->getTable(),
+            'field'              => 'is_recursive',
+            'name'               => __('Child entities'),
+            'datatype'           => 'bool',
         ];
 
         return $tab;
     }
 
 
-   /**
-    * Print survey
-    *
-    * @param       $ID
-    * @param array $options
-    *
-    * @return bool
-    */
+    /**
+     * Print survey
+     *
+     * @param       $ID
+     * @param array $options
+     *
+     * @return bool
+     */
     public function showForm($ID, $options = [])
     {
 
@@ -228,12 +238,12 @@ class PluginSatisfactionSurvey extends CommonDBTM
         echo "<td>" . __('Comments') . "</td>";
         echo "<td>";
         echo Html::textarea([
-                             'name'    => 'comment',
-                             'value'    => $this->fields["comment"],
-                             'cols'    => '60',
-                             'rows'    => '6',
-                             'display' => false,
-                          ]);
+            'name'    => 'comment',
+            'value'    => $this->fields["comment"],
+            'cols'    => '60',
+            'rows'    => '6',
+            'display' => false,
+        ]);
         echo "</td></tr>";
 
         echo "<tr class='tab_bg_1'>";
@@ -248,19 +258,19 @@ class PluginSatisfactionSurvey extends CommonDBTM
         return true;
     }
 
-   /**
-    * Prepare input datas for adding the item
-    *
-    * @param $input datas used to add the item
-    *
-    * @return the modified $input array
-    **/
+    /**
+     * Prepare input datas for adding the item
+     *
+     * @param $input datas used to add the item
+     *
+     * @return false modified $input array
+     **/
     public function prepareInputForAdd($input)
     {
 
         if ($input['is_active'] == 1) {
             $dbu = new DbUtils();
-           //we must store only one survey by entity
+            //we must store only one survey by entity
             $condition  = ['is_active' => 1]
                         + $dbu->getEntitiesRestrictCriteria(
                             $this->getTable(),
@@ -281,22 +291,22 @@ class PluginSatisfactionSurvey extends CommonDBTM
         return $input;
     }
 
-   /**
-    * Prepare input datas for updating the item
-    *
-    * @param $input datas used to update the item
-    *
-    * @return the modified $input array
-    **/
+    /**
+     * Prepare input datas for updating the item
+     *
+     * @param $input datas used to update the item
+     *
+     * @return false modified $input array
+     **/
     public function prepareInputForUpdate($input)
     {
 
-       //active external survey for entity
+        //active external survey for entity
         if (($input['is_active'] ?? 0) == 1) {
             $dbu = new DbUtils();
-           //we must store only one survey by entity (other this one)
+            //we must store only one survey by entity (other this one)
             $condition  = ['is_active' => 1,
-                        ['NOT' => ['id' => $this->getID()]]]
+                ['NOT' => ['id' => $this->getID()]]]
                        + $dbu->getEntitiesRestrictCriteria(
                            $this->getTable(),
                            'entities_id',
@@ -316,34 +326,34 @@ class PluginSatisfactionSurvey extends CommonDBTM
         return $input;
     }
 
-   /**
-    * Actions done before the DELETE of the item in the database /
-    * Maybe used to add another check for deletion
-    *
-    * @return bool : true if item need to be deleted else false
-    **/
+    /**
+     * Actions done before the DELETE of the item in the database /
+     * Maybe used to add another check for deletion
+     *
+     * @return bool : true if item need to be deleted else false
+     **/
     public function pre_deleteItem()
     {
-       //we must delete associated questions and answers
-        $question = new PluginSatisfactionSurveyQuestion;
-        $question->deleteByCriteria([PluginSatisfactionSurveyQuestion::$items_id => $this->getID()]);
+        //we must delete associated questions and answers
+        $question = new SurveyQuestion();
+        $question->deleteByCriteria([SurveyQuestion::$items_id => $this->getID()]);
 
-        $answer = new PluginSatisfactionSurveyAnswer;
-        $answer->deleteByCriteria([PluginSatisfactionSurveyAnswer::$items_id => $this->getID()]);
+        $answer = new SurveyAnswer();
+        $answer->deleteByCriteria([SurveyAnswer::$items_id => $this->getID()]);
 
-        $reminder = new PluginSatisfactionSurveyReminder();
-        $reminder->deleteByCriteria([PluginSatisfactionSurveyReminder::$items_id => $this->getID()]);
+        $reminder = new SurveyReminder();
+        $reminder->deleteByCriteria([SurveyReminder::$items_id => $this->getID()]);
 
         return true;
     }
 
-   /**
-    * Return survey by entity
-    *
-    * @param $entities_id
-    *
-    * @return bool|\PluginSatisfactionSurvey
-    */
+    /**
+     * Return survey by entity
+     *
+     * @param $entities_id
+     *
+     * @return bool|Survey
+     */
     public static function getObjectForEntity($entities_id)
     {
         global $DB;
@@ -351,7 +361,7 @@ class PluginSatisfactionSurvey extends CommonDBTM
         $where = $dbu->getEntitiesRestrictRequest("AND", "survey", 'entities_id', $entities_id, true);
 
         $query = "SELECT `survey`.`id`
-                FROM `".$dbu->getTableForItemType(__CLASS__)."` as `survey`
+                FROM `" . $dbu->getTableForItemType(__CLASS__) . "` as `survey`
                 LEFT JOIN `glpi_entities`
                   ON (`glpi_entities`.`id` = `survey`.`entities_id`)
                 WHERE `is_active` = 1 $where
@@ -367,9 +377,9 @@ class PluginSatisfactionSurvey extends CommonDBTM
         return false;
     }
 
-   /**
-    * @see CommonDBTM::getSpecificMassiveActions()
-    **/
+    /**
+     * @see CommonDBTM::getSpecificMassiveActions()
+     **/
     public function getSpecificMassiveActions($checkitem = null)
     {
 
@@ -377,16 +387,16 @@ class PluginSatisfactionSurvey extends CommonDBTM
         $actions = parent::getSpecificMassiveActions($checkitem);
 
         if ($canadd) {
-            $actions[__CLASS__.MassiveAction::CLASS_ACTION_SEPARATOR.'duplicate'] = _x('button', 'Duplicate');
+            $actions[__CLASS__ . MassiveAction::CLASS_ACTION_SEPARATOR . 'duplicate'] = _x('button', 'Duplicate');
         }
         return $actions;
     }
 
-   /**
-    * @since version 0.85
-    *
-    * @see CommonDBTM::showMassiveActionsSubForm()
-    **/
+    /**
+     * @since version 0.85
+     *
+     * @see CommonDBTM::showMassiveActionsSubForm()
+     **/
     public static function showMassiveActionsSubForm(MassiveAction $ma)
     {
 
@@ -405,7 +415,7 @@ class PluginSatisfactionSurvey extends CommonDBTM
                 if ($entity_assign) {
                     Entity::dropdown();
                 }
-                echo "<br><br>".Html::submit(
+                echo "<br><br>" . Html::submit(
                     _x('button', 'Duplicate'),
                     ['name' => 'massiveaction', 'class' => 'btn btn-primary']
                 );
@@ -414,11 +424,11 @@ class PluginSatisfactionSurvey extends CommonDBTM
         return parent::showMassiveActionsSubForm($ma);
     }
 
-   /**
-    * @since version 0.85
-    *
-    * @see CommonDBTM::processMassiveActionsForOneItemtype()
-    **/
+    /**
+     * @since version 0.85
+     *
+     * @see CommonDBTM::processMassiveActionsForOneItemtype()
+     **/
     public static function processMassiveActionsForOneItemtype(
         MassiveAction $ma,
         CommonDBTM $item,
@@ -446,23 +456,23 @@ class PluginSatisfactionSurvey extends CommonDBTM
         parent::processMassiveActionsForOneItemtype($ma, $item, $ids);
     }
 
-   /**
-    * Duplicate a survey
-    *
-    * @param $ID        of the rule to duplicate
-    *
-    * @since version 0.85
-    *
-    * @return true if all ok
-    **/
+    /**
+     * Duplicate a survey
+     *
+     * @param $ID        of the rule to duplicate
+     *
+     * @since version 0.85
+     *
+     * @return true if all ok
+     **/
     public function duplicateSurvey($ID, $entities_id)
     {
 
-       //duplicate survey
+        //duplicate survey
         $survey = new self();
         $survey->getFromDB($ID);
 
-       //Update fields of the new duplicate
+        //Update fields of the new duplicate
         $survey->fields['name']        = sprintf(
             __('Copy of %s'),
             $survey->fields['name']
@@ -471,14 +481,14 @@ class PluginSatisfactionSurvey extends CommonDBTM
         $survey->fields['entities_id'] = $entities_id;
         unset($survey->fields['id']);
 
-       //add new duplicate
+        //add new duplicate
         $input = $survey->fields;
         $newID = $survey->add($input);
         if (!$newID) {
             return false;
         }
-       //find and duplicate questions
-        $question_obj  = new PluginSatisfactionSurveyQuestion();
+        //find and duplicate questions
+        $question_obj  = new SurveyQuestion();
         $questions = $question_obj->find(['plugin_satisfaction_surveys_id' => $ID]);
         $questions = $questions;
         foreach ($questions as $question) {
@@ -488,20 +498,20 @@ class PluginSatisfactionSurvey extends CommonDBTM
             if (!$new_question_id = $question_obj->add($question)) {
                 return false;
             }
-           //find and duplicate translations
-            $translation_obj  = new PluginSatisfactionSurveyTranslation();
+            //find and duplicate translations
+            $translation_obj  = new SurveyTranslation();
             $translations = $translation_obj->find([
-            'plugin_satisfaction_surveys_id' => $ID,
-            'glpi_plugin_satisfaction_surveyquestions_id' => $question_id
+                'plugin_satisfaction_surveys_id' => $ID,
+                'glpi_plugin_satisfaction_surveyquestions_id' => $question_id,
             ]);
             $translations = $translations;
             foreach ($translations as $translation) {
-                 $translation_obj->newSurveyTranslation([
-                  'survey_id' => $newID,
-                  'question_id' => $new_question_id,
-                  'language' => $translation['language'],
-                  'value' => $translation['value']
-                 ]);
+                $translation_obj->newSurveyTranslation([
+                    'survey_id' => $newID,
+                    'question_id' => $new_question_id,
+                    'language' => $translation['language'],
+                    'value' => $translation['value'],
+                ]);
             }
         }
 

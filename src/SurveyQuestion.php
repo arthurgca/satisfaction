@@ -1,4 +1,5 @@
 <?php
+
 /*
  * @version $Id: HEADER 15930 2011-10-30 15:47:55Z tsmr $
  -------------------------------------------------------------------------
@@ -27,56 +28,66 @@
  --------------------------------------------------------------------------
  */
 
+namespace GlpiPlugin\Satisfaction;
+
+use Ajax;
+use CommonDBChild;
+use CommonGLPI;
+use DbUtils;
+use Dropdown;
+use Html;
+use Session;
+use Toolbox;
+
 if (!defined('GLPI_ROOT')) {
     die("Sorry. You can't access directly to this file");
 }
 
 /**
- * Class PluginSatisfactionSurveyQuestion
+ * Class SurveyQuestion
  */
-class PluginSatisfactionSurveyQuestion extends CommonDBChild
+class SurveyQuestion extends CommonDBChild
 {
-
-    static $rightname = "plugin_satisfaction";
+    public static $rightname = "plugin_satisfaction";
     public $dohistory = true;
 
-   // From CommonDBChild
-    public static $itemtype = 'PluginSatisfactionSurvey';
+    // From CommonDBChild
+    public static $itemtype = Survey::class;
     public static $items_id = 'plugin_satisfaction_surveys_id';
 
-    const YESNO    = 'yesno';
-    const TEXTAREA = 'textarea';
-    const NOTE     = 'note';
+    public const YESNO    = 'yesno';
+    public const TEXTAREA = 'textarea';
+    public const NOTE     = 'note';
 
-   /**
-    * Return the localized name of the current Type
-    * Should be overloaded in each new class
-    *
-    * @return string
-    **/
+    /**
+     * Return the localized name of the current Type
+     * Should be overloaded in each new class
+     *
+     * @return string
+     **/
     public static function getTypeName($nb = 0)
     {
         return _n('Question', 'Questions', $nb, 'satisfaction');
     }
 
-   /**
-    * Get Tab Name used for itemtype
-    *
-    * NB : Only called for existing object
-    *      Must check right on what will be displayed + template
-    *
-    * @since version 0.83
-    *
-    * @param CommonDBTM|CommonGLPI $item CommonDBTM object for which the tab need to be displayed
-    * @param bool|int              $withtemplate boolean  is a template object ? (default 0)
-    *
-    * @return string tab name
-    */
+    /**
+     * Get Tab Name used for itemtype
+     *
+     * NB : Only called for existing object
+     *      Must check right on what will be displayed + template
+     *
+     * @since version 0.83
+     *
+     * @param CommonGLPI $item CommonDBTM object for which the tab need to be displayed
+     * @param bool|int              $withtemplate boolean  is a template object ? (default 0)
+     *
+     * @return string tab name
+     */
     public function getTabNameForItem(CommonGLPI $item, $withtemplate = 0)
     {
 
-       // can exists for template
-        if ($item->getType() == 'PluginSatisfactionSurvey') {
+        // can exists for template
+        if ($item->getType() == Survey::class) {
             if ($_SESSION['glpishow_count_on_tabs']) {
                 $dbu = new DbUtils();
                 $table = $dbu->getTableForItemType(__CLASS__);
@@ -96,36 +107,36 @@ class PluginSatisfactionSurveyQuestion extends CommonDBChild
     {
         return "ti ti-user-question";
     }
-   /**
-    * show Tab content
-    *
-    * @since version 0.83
-    *
-    * @param          $item                  CommonGLPI object for which the tab need to be displayed
-    * @param          $tabnum       integer  tab number (default 1)
-    * @param bool|int $withtemplate boolean  is a template object ? (default 0)
-    *
-    * @return true
-    */
+    /**
+     * show Tab content
+     *
+     * @since version 0.83
+     *
+     * @param          $item                  CommonGLPI object for which the tab need to be displayed
+     * @param          $tabnum       integer  tab number (default 1)
+     * @param bool|int $withtemplate boolean  is a template object ? (default 0)
+     *
+     * @return true
+     */
     public static function displayTabContentForItem(CommonGLPI $item, $tabnum = 1, $withtemplate = 0)
     {
 
-        if ($item->getType() == 'PluginSatisfactionSurvey') {
+        if ($item->getType() == Survey::class) {
             self::showForSurvey($item, $withtemplate);
         }
         return true;
     }
 
 
-   /**
-    * Question display
-    *
-    * @param \PluginSatisfactionSurvey $survey
-    * @param string                    $withtemplate
-    *
-    * @return bool
-    */
-    public static function showForSurvey(PluginSatisfactionSurvey $survey, $withtemplate = '')
+    /**
+     * Question display
+     *
+     * @param Survey $survey
+     * @param string                    $withtemplate
+     *
+     * @return bool
+     */
+    public static function showForSurvey(Survey $survey, $withtemplate = '')
     {
         global $CFG_GLPI;
 
@@ -137,8 +148,8 @@ class PluginSatisfactionSurveyQuestion extends CommonDBChild
         $canedit  = Session::haveRight(self::$rightname, UPDATE);
         $canpurge = Session::haveRight(self::$rightname, PURGE);
 
-       //check if answer exists to forbid edition
-        $answer       = new PluginSatisfactionSurveyAnswer;
+        //check if answer exists to forbid edition
+        $answer       = new SurveyAnswer();
         $found_answer = $answer->find([self::$items_id => $survey->fields['id']]);
         if (count($found_answer) > 0) {
             echo "<span style='font-weight:bold; color:red'>" . __('You cannot edit the questions when answers exists for this survey. Disable this survey and create a new one !', 'satisfaction') . "</span>";
@@ -152,9 +163,9 @@ class PluginSatisfactionSurveyQuestion extends CommonDBChild
             echo "<script type='text/javascript' >\n";
             echo "function viewAddQuestion$sID$rand_survey() {\n";
             $params = ['type'          => __CLASS__,
-                         'parenttype'    => 'PluginSatisfactionSurvey',
-                         self::$items_id => $sID,
-                         'id'            => -1];
+                'parenttype'    => Survey::class,
+                self::$items_id => $sID,
+                'id'            => -1];
             Ajax::updateItemJsCode(
                 "viewquestion$sID$rand_survey",
                 $CFG_GLPI["root_doc"] . "/ajax/viewsubitem.php",
@@ -162,12 +173,12 @@ class PluginSatisfactionSurveyQuestion extends CommonDBChild
             );
             echo "};";
             echo "</script>\n";
-            echo "<div class='center'>" .
-              "<a href='javascript:viewAddQuestion$sID$rand_survey();'>";
+            echo "<div class='center'>"
+              . "<a href='javascript:viewAddQuestion$sID$rand_survey();'>";
             echo __('Add a question', 'satisfaction') . "</a></div><br>\n";
         }
 
-       // Display existing questions
+        // Display existing questions
         $questions = $squestions_obj->find([self::$items_id => $sID], 'id');
         if (count($questions) == 0) {
             echo "<table class='tab_cadre_fixe'><tr class='tab_bg_2'>";
@@ -176,7 +187,7 @@ class PluginSatisfactionSurveyQuestion extends CommonDBChild
         } else {
             $rand = mt_rand();
             if ($canpurge) {
-               //TODO : Detect delete to update history
+                //TODO : Detect delete to update history
                 Html::openMassiveActionsForm('mass' . __CLASS__ . $rand);
                 $massiveactionparams = ['item' => __CLASS__, 'container' => 'mass' . __CLASS__ . $rand];
                 Html::showMassiveActions($massiveactionparams);
@@ -205,12 +216,12 @@ class PluginSatisfactionSurveyQuestion extends CommonDBChild
         }
     }
 
-   /**
-    * @param       $ID
-    * @param array $options
-    *
-    * @return bool
-    */
+    /**
+     * @param       $ID
+     * @param array $options
+     *
+     * @return bool
+     */
     public function showForm($ID, $options = [])
     {
         global $CFG_GLPI;
@@ -239,24 +250,24 @@ class PluginSatisfactionSurveyQuestion extends CommonDBChild
         echo "<td>" . self::getTypeName(1) . "&nbsp;:</td>";
         echo "<td>";
         echo Html::textarea([
-                             'name'    => 'name',
-                             'value'    => $surveyquestion->fields["name"],
-                             'cols'    => '50',
-                             'rows'    => '4',
-                             'display' => false,
-                          ]);
+            'name'    => 'name',
+            'value'    => $surveyquestion->fields["name"],
+            'cols'    => '50',
+            'rows'    => '4',
+            'display' => false,
+        ]);
         echo "</td>";
-        echo Html::hidden(self::$items_id, ['value' =>$surveyquestion->fields[self::$items_id]]);
+        echo Html::hidden(self::$items_id, ['value' => $surveyquestion->fields[self::$items_id]]);
         echo "</td>";
         echo "<td rowspan='2'>" . __('Comments') . "</td>";
         echo "<td rowspan='2'>";
         echo Html::textarea([
-                             'name'    => 'comment',
-                             'value'    => $surveyquestion->fields["comment"],
-                             'cols'    => '60',
-                             'rows'    => '6',
-                             'display' => false,
-                          ]);
+            'name'    => 'comment',
+            'value'    => $surveyquestion->fields["comment"],
+            'cols'    => '60',
+            'rows'    => '6',
+            'display' => false,
+        ]);
         echo "</td></tr>";
 
         echo "<tr class='tab_bg_1'>";
@@ -264,7 +275,7 @@ class PluginSatisfactionSurveyQuestion extends CommonDBChild
         echo "<td>";
         $array = self::getQuestionTypeList();
         Dropdown::showFromArray('type', $array, ['value'     => $surveyquestion->fields['type'],
-                                               'on_change' => "plugin_satisfaction_loadtype(this.value, \"" . self::NOTE . "\");"]);
+            'on_change' => "plugin_satisfaction_loadtype(this.value, \"" . self::NOTE . "\");"]);
 
         $script = "function plugin_satisfaction_loadtype(val, note){";
         $script .= "if(val == note) {
@@ -285,9 +296,9 @@ class PluginSatisfactionSurveyQuestion extends CommonDBChild
         echo "</td>";
         echo "<td>";
         Dropdown::showNumber('number', ['max'   => 10,
-                                      'min'   => 2,
-                                      'value' => $surveyquestion->fields['number'],
-                                      'on_change' => "plugin_satisfaction_load_defaultvalue(\"" . PLUGINSATISFACTION_WEBDIR . "\", this.value);"]);
+            'min'   => 2,
+            'value' => $surveyquestion->fields['number'],
+            'on_change' => "plugin_satisfaction_load_defaultvalue(\"" . PLUGINSATISFACTION_WEBDIR . "\", this.value);"]);
         echo "</td>";
 
         if (!empty($surveyquestion->fields['number'])) {
@@ -301,8 +312,8 @@ class PluginSatisfactionSurveyQuestion extends CommonDBChild
         echo "</td>";
         echo "<td id='default_value'>";
         Dropdown::showNumber('default_value', ['max'   => $max_default_value,
-                                      'min'   => 1,
-                                      'value' => $surveyquestion->fields['default_value']]);
+            'min'   => 1,
+            'value' => $surveyquestion->fields['default_value']]);
 
         echo "</td>";
         echo "</tr>";
@@ -323,22 +334,22 @@ class PluginSatisfactionSurveyQuestion extends CommonDBChild
         Html::closeForm();
     }
 
-   /**
-    * Display line with name & type
-    *
-    * @param $canedit
-    * @param $rand
-    */
+    /**
+     * Display line with name & type
+     *
+     * @param $canedit
+     * @param $rand
+     */
     public function showOne($canedit, $canpurge, $rand)
     {
         global $CFG_GLPI;
 
         $style = '';
         if ($canedit) {
-            $style = "style='cursor:pointer' onClick=\"viewEditQuestion" .
-                  $this->fields[self::$items_id] .
-                  $this->fields['id'] . "$rand();\"" .
-                  " id='viewquestion" . $this->fields[self::$items_id] . $this->fields["id"] . "$rand'";
+            $style = "style='cursor:pointer' onClick=\"viewEditQuestion"
+                  . $this->fields[self::$items_id]
+                  . $this->fields['id'] . "$rand();\""
+                  . " id='viewquestion" . $this->fields[self::$items_id] . $this->fields["id"] . "$rand'";
         }
         echo "<tr class='tab_bg_2' $style>";
 
@@ -352,9 +363,9 @@ class PluginSatisfactionSurveyQuestion extends CommonDBChild
             echo "\n<script type='text/javascript' >\n";
             echo "function viewEditQuestion" . $this->fields[self::$items_id] . $this->fields["id"] . "$rand() {\n";
             $params = ['type'          => __CLASS__,
-                    'parenttype'    => self::$itemtype,
-                    self::$items_id => $this->fields[self::$items_id],
-                    'id'            => $this->fields["id"]];
+                'parenttype'    => self::$itemtype,
+                self::$items_id => $this->fields[self::$items_id],
+                'id'            => $this->fields["id"]];
             Ajax::updateItemJsCode(
                 "viewquestion" . $this->fields[self::$items_id] . "$rand",
                 $CFG_GLPI["root_doc"] . "/ajax/viewsubitem.php",
@@ -371,11 +382,11 @@ class PluginSatisfactionSurveyQuestion extends CommonDBChild
         echo "</tr>";
     }
 
-   /**
-    * List of question types
-    *
-    * @return array
-    */
+    /**
+     * List of question types
+     *
+     * @return array
+     */
     public static function getQuestionTypeList()
     {
         $array                 = [];
@@ -385,11 +396,11 @@ class PluginSatisfactionSurveyQuestion extends CommonDBChild
         return $array;
     }
 
-   /**
-    * Return the type
-    *
-    * @return array
-    */
+    /**
+     * Return the type
+     *
+     * @return array
+     */
     public static function getQuestionType($type)
     {
         switch ($type) {
@@ -403,13 +414,13 @@ class PluginSatisfactionSurveyQuestion extends CommonDBChild
         return "";
     }
 
-   /**
-    * Get the standard massive actions which are forbidden
-    *
-    * @since version 0.84
-    *
-    * @return an array of massive actions
-    **/
+    /**
+     * Get the standard massive actions which are forbidden
+     *
+     * @since version 0.84
+     *
+     * @return an array of massive actions
+     **/
     public function getForbiddenStandardMassiveAction()
     {
 

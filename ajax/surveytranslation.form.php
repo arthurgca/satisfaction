@@ -27,6 +27,8 @@
  --------------------------------------------------------------------------
  */
 
+use GlpiPlugin\Satisfaction\SurveyTranslation;
+
 Session::checkRight('plugin_satisfaction', UPDATE);
 
 if (!isset($_POST['survey_id']) || !isset($_POST['action'])) {
@@ -36,7 +38,7 @@ if (!isset($_POST['survey_id']) || !isset($_POST['action'])) {
 global $CFG_GLPI;
 $redirection = PLUGINSATISFACTION_WEBDIR."/front/survey.form.php?id=";
 
-$translation = new PluginSatisfactionSurveyTranslation();
+$translation = new SurveyTranslation();
 
 switch ($_POST['action']) {
     case 'GET':

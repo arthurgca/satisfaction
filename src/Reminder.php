@@ -27,17 +27,24 @@
  --------------------------------------------------------------------------
  */
 
+namespace GlpiPlugin\Satisfaction;
+
+use CommonDBTM;
+use CronTask;
+use Entity;
+use Ticket;
+use TicketSatisfaction;
 
 if (!defined('GLPI_ROOT')) {
     die("Sorry. You can't access this file directly");
 }
 
 /**
- * Class PluginSatisfactionSurvey
+ * Class Reminder
  *
  * Used to store reminders to send automatically
  */
-class PluginSatisfactionReminder extends CommonDBTM
+class Reminder extends CommonDBTM
 {
 
     public static $rightname = "plugin_satisfaction";
@@ -99,7 +106,7 @@ class PluginSatisfactionReminder extends CommonDBTM
     {
 
         $CronTask = new CronTask();
-        if ($CronTask->getFromDBbyName(PluginSatisfactionReminder::class, PluginSatisfactionReminder::CRON_TASK_NAME)) {
+        if ($CronTask->getFromDBbyName(Reminder::class, Reminder::CRON_TASK_NAME)) {
             if ($CronTask->fields["state"] == CronTask::STATE_DISABLE) {
                 return 0;
             }
@@ -147,11 +154,11 @@ class PluginSatisfactionReminder extends CommonDBTM
 
         $entityDBTM = new Entity();
 
-        $pluginSatisfactionSurveyDBTM         = new PluginSatisfactionSurvey();
-        $pluginSatisfactionSurveyReminderDBTM = new PluginSatisfactionSurveyReminder();
-        $pluginSatisfactionReminderDBTM       = new PluginSatisfactionReminder();
+        $Survey         = new Survey();
+        $SurveyReminder = new SurveyReminder();
+        $Reminder       = new Reminder();
 
-        $surveys = $pluginSatisfactionSurveyDBTM->find(['is_active' => true]);
+        $surveys = $Survey->find(['is_active' => true]);
 
         foreach ($surveys as $survey) {
            // Entity
@@ -173,14 +180,14 @@ class PluginSatisfactionReminder extends CommonDBTM
                  'plugin_satisfaction_surveys_id' => $survey['id'],
                  'is_active'                      => 1,
                 ];
-                $surveyReminders    = $pluginSatisfactionSurveyReminderDBTM->find($surveyReminderCrit);
+                $surveyReminders    = $SurveyReminder->find($surveyReminderCrit);
 
                 $potentialReminderToSendDates = [];
 
                 // Calculate the next date of next reminders
                 foreach ($surveyReminders as $surveyReminder) {
                     $reminders = null;
-                    $reminders = $pluginSatisfactionReminderDBTM->find([
+                    $reminders = $Reminder->find([
                         'tickets_id' => $ticketSatisfaction['tickets_id'],
                                                                    'type'       => $surveyReminder['id']]);
 
@@ -190,7 +197,7 @@ class PluginSatisfactionReminder extends CommonDBTM
                         $lastSurveySendDate = date('Y-m-d', strtotime($ticketSatisfaction['date_begin']));
 
                       // Date when glpi satisfaction was sended for the first time
-                        $reminders_to_send = $pluginSatisfactionReminderDBTM->find([
+                        $reminders_to_send = $Reminder->find([
                             'tickets_id' => $ticketSatisfaction['tickets_id']]);
                         if (count($reminders_to_send)) {
                               $reminder           = array_pop($reminders_to_send);
@@ -199,17 +206,17 @@ class PluginSatisfactionReminder extends CommonDBTM
 
                         $date = null;
 
-                        switch ($surveyReminder[PluginSatisfactionSurveyReminder::COLUMN_DURATION_TYPE]) {
-                            case PluginSatisfactionSurveyReminder::DURATION_DAY:
+                        switch ($surveyReminder[SurveyReminder::COLUMN_DURATION_TYPE]) {
+                            case SurveyReminder::DURATION_DAY:
                                 $add  = " +" . $surveyReminder[
-                                    PluginSatisfactionSurveyReminder::COLUMN_DURATION] . " day";
+                                    SurveyReminder::COLUMN_DURATION] . " day";
                                 $date = strtotime(date("Y-m-d", strtotime($lastSurveySendDate)) . $add);
                                 $date = date('Y-m-d', $date);
                                 break;
 
-                            case PluginSatisfactionSurveyReminder::DURATION_MONTH:
+                            case SurveyReminder::DURATION_MONTH:
                                  $add  = " +" . $surveyReminder[
-                                     PluginSatisfactionSurveyReminder::COLUMN_DURATION] . " month";
+                                     SurveyReminder::COLUMN_DURATION] . " month";
                                  $date = strtotime(date("Y-m-d", strtotime($lastSurveySendDate)) . $add);
                                  $date = date('Y-m-d', $date);
                                 break;
@@ -225,13 +232,9 @@ class PluginSatisfactionReminder extends CommonDBTM
                     }
                 }
                 // Order dates
-                if (!function_exists("date_sort")) {
-                    function date_sort($a, $b)
-                    {
-                        return strtotime($a["date"]) - strtotime($b["date"]);
-                    }
-                }
-                usort($potentialReminderToSendDates, "date_sort");
+                usort($potentialReminderToSendDates, function($a, $b) {
+                    strtotime($a["date"]) - strtotime($b["date"]);
+                });
                 $dateNow = date("Y-m-d");
 
                 if (isset($potentialReminderToSendDates[0])) {
@@ -240,7 +243,7 @@ class PluginSatisfactionReminder extends CommonDBTM
                    //
                     if ($potentialTimestamp <= $nowTimestamp) {
                       // Send notification
-                        PluginSatisfactionNotificationTargetTicket::sendReminder($ticketSatisfaction['tickets_id']);
+                        NotificationTargetTicket::sendReminder($ticketSatisfaction['tickets_id']);
                         $self = new self();
                         $self->add([
                                 'type'       => $potentialReminderToSendDates[0]['type'],

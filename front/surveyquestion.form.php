@@ -29,10 +29,11 @@
 
 
 use Glpi\Exception\Http\BadRequestHttpException;
+use GlpiPlugin\Satisfaction\SurveyQuestion;
 
 Session::checkLoginUser();
 
-$question = new PluginSatisfactionSurveyQuestion();
+$question = new SurveyQuestion();
 
 if (isset($_POST["add"])) {
     $question->check(-1, CREATE, $_POST);

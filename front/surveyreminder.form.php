@@ -29,10 +29,11 @@
 
 
 use Glpi\Exception\Http\BadRequestHttpException;
+use GlpiPlugin\Satisfaction\SurveyReminder;
 
 Session::checkLoginUser();
 
-$reminder = new PluginSatisfactionSurveyReminder();
+$reminder = new SurveyReminder();
 
 if (isset($_POST["add"])) {
     $input = $_POST;

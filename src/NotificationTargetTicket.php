@@ -1,4 +1,5 @@
 <?php
+
 /*
  * @version $Id: HEADER 15930 2011-10-30 15:47:55Z tsmr $
  -------------------------------------------------------------------------
@@ -27,16 +28,26 @@
  --------------------------------------------------------------------------
  */
 
+namespace GlpiPlugin\Satisfaction;
+
+use CommonDBTM;
+use Notification;
+use Notification_NotificationTemplate;
+use NotificationEvent;
+use NotificationTarget;
+use NotificationTemplate;
+use NotificationTemplateTranslation;
+use Ticket;
+
 if (!defined('GLPI_ROOT')) {
     die("Sorry. You can't access directly to this file");
 }
 
 /**
- * Class PluginSatisfactionNotificationTargetTicket
+ * Class NotificationTargetTicket
  */
-class PluginSatisfactionNotificationTargetTicket extends NotificationTarget
+class NotificationTargetTicket extends NotificationTarget
 {
-
     public function getEvents()
     {
         return ["survey_reminder" => __('Survey Reminder', 'satisfaction')];
@@ -49,13 +60,12 @@ class PluginSatisfactionNotificationTargetTicket extends NotificationTarget
          = __('Survey Reminder', 'satisfaction');
     }
 
-    public function addDataForTemplate($event, $options = [])
-    {
+    public function addDataForTemplate($event, $options = []) {
+
+        $this->data["##survey_reminder.action##"] = __('Survey Reminder', 'satisfaction');
     }
 
-    public function addSpecificTargets($data, $options)
-    {
-    }
+    public function addSpecificTargets($data, $options) {}
 
     public static function sendReminder($tickets_id)
     {
@@ -73,9 +83,9 @@ class PluginSatisfactionNotificationTargetTicket extends NotificationTarget
         $this->tag_descriptions = $notification_target_ticket->tag_descriptions;
     }
 
-    public function getDatasForObject(CommonDBTM $item, array $options, $simple = false)
+    public function getDataForObject(CommonDBTM $item, array $options, $simple = false)
     {
-        $notification_target_ticket = new NotificationTargetTicket();
+        $notification_target_ticket = new \NotificationTargetTicket();
         $data = $notification_target_ticket->getDataForObject($item, $options, $simple);
         return $data;
     }
@@ -86,22 +96,22 @@ class PluginSatisfactionNotificationTargetTicket extends NotificationTarget
         $notificationTemplateDBTM = new NotificationTemplate();
         if (!$notificationTemplateDBTM->getFromDBByCrit(['name' => 'Ticket Satisfaction Reminder'])) {
             $notificationTemplateId = $notificationTemplateDBTM->add([
-            'name'     => "Ticket Satisfaction Reminder",
-            'itemtype' => 'Ticket',
-            'comment'  => "Created by the plugin satisfaction"
+                'name'     => "Ticket Satisfaction Reminder",
+                'itemtype' => 'Ticket',
+                'comment'  => "Created by the plugin satisfaction",
             ]);
         }
 
         $notificationDBTM = new Notification();
         if (!$notificationDBTM->getFromDBByCrit(['name' => 'Ticket Satisfaction Reminder'])) {
             $notifications_id   = $notificationDBTM->add([
-            'name'                     => "Ticket Satisfaction Reminder",
-            'entities_id'              => 0,
-            'is_recursive'             => 1,
-            'is_active'                => 1,
-            'itemtype'                 => 'Ticket',
-            'event'                    => "survey_reminder",
-            'comment'                  => "Created by the plugin Satisfaction"
+                'name'                     => "Ticket Satisfaction Reminder",
+                'entities_id'              => 0,
+                'is_recursive'             => 1,
+                'is_active'                => 1,
+                'itemtype'                 => 'Ticket',
+                'event'                    => "survey_reminder",
+                'comment'                  => "Created by the plugin Satisfaction",
             ]);
         }
     }
@@ -127,7 +137,7 @@ class PluginSatisfactionNotificationTargetTicket extends NotificationTarget
             'FROM' => 'glpi_notificationtemplates',
             'WHERE' => $options]) as $data) {
             $options_template = [
-                'notificationtemplates_id' => $data['id']
+                'notificationtemplates_id' => $data['id'],
             ];
 
             foreach ($DB->request([

@@ -28,12 +28,15 @@
  */
 
 
+use Glpi\Exception\Http\NotFoundHttpException;
+use GlpiPlugin\Satisfaction\SurveyTranslation;
+
 if (!isset($_POST['survey_id']) || !isset($_POST['action'])) {
-    throw new \Glpi\Exception\Http\NotFoundHttpException();
+    throw new NotFoundHttpException();
 }
 
 $redirection = PLUGINSATISFACTION_WEBDIR."/front/survey.form.php?id=";
-$translation = new PluginSatisfactionSurveyTranslation();
+$translation = new SurveyTranslation();
 switch ($_POST['action']) {
     case 'NEW':
         $translation->newSurveyTranslation($_POST);

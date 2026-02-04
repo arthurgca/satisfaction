@@ -28,6 +28,9 @@
  */
 
 
+use Glpi\Exception\Http\NotFoundHttpException;
+use GlpiPlugin\Satisfaction\SurveyReminder;
+
 header("Content-Type: text/html; charset=UTF-8");
 Html::header_nocache();
 
@@ -35,10 +38,10 @@ Session::checkLoginUser();
 Session::checkRight('plugin_satisfaction', UPDATE);
 
 if (!isset($_POST['type'])) {
-    throw new \Glpi\Exception\Http\NotFoundHttpException();
+    throw new NotFoundHttpException();
 }
 if (!isset($_POST['parenttype'])) {
-    throw new \Glpi\Exception\Http\NotFoundHttpException();
+    throw new NotFoundHttpException();
 }
 
 if (($item = getItemForItemtype($_POST['type']))
@@ -46,7 +49,7 @@ if (($item = getItemForItemtype($_POST['type']))
     if (isset($_POST[$parent->getForeignKeyField()])
       && isset($_POST["id"])
       && $parent->getFromDB($_POST[$parent->getForeignKeyField()])) {
-        $reminderName = PluginSatisfactionSurveyReminder::PREDEFINED_REMINDER_OPTION_NAME;
+        $reminderName = SurveyReminder::PREDEFINED_REMINDER_OPTION_NAME;
 
         $options = [
          'parent' => $parent

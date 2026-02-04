@@ -1,4 +1,5 @@
 <?php
+
 /*
  * @version $Id: HEADER 15930 2011-10-30 15:47:55Z tsmr $
  -------------------------------------------------------------------------
@@ -27,14 +28,22 @@
  --------------------------------------------------------------------------
  */
 
+namespace GlpiPlugin\Satisfaction;
+
+use CommonGLPI;
+use DbUtils;
+use Html;
+use ProfileRight;
+use Session;
+
 if (!defined('GLPI_ROOT')) {
     die("Sorry. You can't access directly to this file");
 }
 
 /**
- * Class PluginSatisfactionProfile
+ * Class Profile
  */
-class PluginSatisfactionProfile extends Profile
+class Profile extends \Profile
 {
     public static $rightname = "profile";
 
@@ -51,8 +60,9 @@ class PluginSatisfactionProfile extends Profile
         }
         return '';
     }
-    public static function getIcon() {
-        return PluginSatisfactionMenu::getIcon();
+    public static function getIcon()
+    {
+        return Menu::getIcon();
     }
     /**
      * @param CommonGLPI $item
@@ -130,17 +140,17 @@ class PluginSatisfactionProfile extends Profile
     {
         echo "<div class='firstbloc'>";
         if (($canedit = Session::haveRightsOr(self::$rightname, [CREATE, UPDATE, PURGE])) && $openform) {
-            $profile = new Profile();
+            $profile = new \Profile();
             echo "<form method='post' action='" . $profile->getFormURL() . "'>";
         }
 
-        $profile = new Profile();
+        $profile = new \Profile();
         $profile->getFromDB($profiles_id);
         if ($profile->getField('interface') == 'central') {
             $rights = $this->getAllRights();
             $profile->displayRightsChoiceMatrix($rights, ['canedit'       => $canedit,
-                                                               'default_class' => 'tab_bg_2',
-                                                               'title'         => __('General')]);
+                'default_class' => 'tab_bg_2',
+                'title'         => __('General')]);
         }
 
         if ($canedit && $closeform) {
@@ -161,10 +171,10 @@ class PluginSatisfactionProfile extends Profile
     public static function getAllRights($all = false)
     {
         $rights = [
-           ['itemtype' => 'PluginSatisfactionSurvey',
-                 'label'    => PluginSatisfactionSurvey::getTypeName(2),
-                 'field'    => 'plugin_satisfaction'
-           ],
+            ['itemtype' => Survey::class,
+                'label'    => Survey::getTypeName(2),
+                'field'    => 'plugin_satisfaction',
+            ],
         ];
 
         return $rights;
@@ -218,8 +228,8 @@ class PluginSatisfactionProfile extends Profile
             'FROM' => 'glpi_profilerights',
             'WHERE' => [
                 'profiles_id' => $_SESSION['glpiactiveprofile']['id'],
-                'name' => ['LIKE', '%plugin_satisfaction%']
-            ]
+                'name' => ['LIKE', '%plugin_satisfaction%'],
+            ],
         ]);
         foreach ($it as $prof) {
             if (isset($_SESSION['glpiactiveprofile'])) {
