@@ -42,7 +42,7 @@ use GlpiPlugin\Satisfaction\Profile;
 use GlpiPlugin\Satisfaction\Reminder;
 use GlpiPlugin\Satisfaction\SurveyAnswer;
 
-define("PLUGIN_SATISFACTION_VERSION", "1.7.1");
+define("PLUGIN_SATISFACTION_VERSION", "1.7.2");
 
 // Minimal GLPI version, inclusive
 define('PLUGIN_SATISFACTION_MIN_GLPI', '11.0');

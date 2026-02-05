@@ -53,7 +53,7 @@ class NotificationTargetTicket extends NotificationTarget
         return ["survey_reminder" => __('Survey Reminder', 'satisfaction')];
     }
 
-    public static function addEvents(NotificationTargetTicket $target)
+    public static function addEvents(\NotificationTargetTicket $target)
     {
 
         $target->events['survey_reminder']
@@ -78,7 +78,7 @@ class NotificationTargetTicket extends NotificationTarget
 
     public function getTags()
     {
-        $notification_target_ticket = new NotificationTargetTicket();
+        $notification_target_ticket = new \NotificationTargetTicket();
         $notification_target_ticket->getTags();
         $this->tag_descriptions = $notification_target_ticket->tag_descriptions;
     }
