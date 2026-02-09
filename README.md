@@ -136,3 +136,13 @@ GPLv2+
 
 - [GitHub](https://github.com/pluginsGLPI/satisfaction)
 - [Transifex](https://www.transifex.com/InfotelGLPI/GLPI_satisfaction) (Traduções)
+
+## Histórico de Mudanças Recentes
+
+- **Correção de Duplicidade na Aba de Satisfação**: 
+  - Resolvido um problema onde as perguntas da pesquisa apareciam duplicadas na interface completa (admin).
+  - Ajuste realizado no registro dos hooks em `setup.php`, removendo o hook `pre_item_form` redundante e mantendo apenas `post_item_form`, que atende corretamente ambas as interfaces (simplificada e completa).
+
+- **Limpeza de Logs de Depuração**:
+  - Removidos comandos `console.log` do arquivo `public/satisfaction.js` que eram usados para depurar o reposicionamento de elementos na interface.
+  - Removido `error_log` no arquivo `src/SurveyAnswer.php` que registrava o tipo de item processado pelo plugin.

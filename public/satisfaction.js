@@ -30,8 +30,6 @@ $(document).ready(function () {
     var surveyIdField = $('input[name="plugin_satisfaction_surveys_id"]');
 
     if (surveyIdField.length > 0) {
-        console.log('SATISFACTION PLUGIN: Found survey questions, repositioning...');
-
         // Encontrar todas as perguntas extras (rows que vêm depois do campo hidden)
         var extraQuestions = surveyIdField.nextAll('.row.mb-2');
 
@@ -42,8 +40,6 @@ $(document).ready(function () {
         }).first();
 
         if (firstNativeQuestion.length > 0 && extraQuestions.length > 0) {
-            console.log('SATISFACTION PLUGIN: Moving ' + extraQuestions.length + ' questions above native questions');
-
             // Mover as perguntas extras para antes da primeira pergunta nativa
             extraQuestions.each(function () {
                 $(this).insertBefore(firstNativeQuestion);
@@ -52,7 +48,5 @@ $(document).ready(function () {
             // Mover o campo hidden também
             surveyIdField.insertBefore(firstNativeQuestion);
         }
-
-        console.log('SATISFACTION PLUGIN: Repositioning complete');
     }
 });
