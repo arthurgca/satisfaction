@@ -1,52 +1,138 @@
-Introduction
-============
+# Plugin Satisfaction para GLPI
 
-This plugin extends the satisfaction survey of GLPI.
+Este plugin estende a pesquisa de satisfação nativa do GLPI, permitindo adicionar perguntas personalizadas ao formulário de satisfação.
 
-Satisfaction is a plugin which allows you to add questions to the satisfaction survey.
+## Funcionalidades
 
-Features
---------
+* Diferentes pesquisas (uma para cada entidade)
+* Múltiplos tipos de perguntas:
+  - Sim / Não (dropdown)
+  - Texto livre (textarea)
+  - Avaliação por estrelas (configurável de 2 a 10 estrelas)
+* Compatível com interface central e interface simplificada (self-service) do GLPI 11
+* Suporte a traduções multi-idioma
+* Tags personalizadas para notificações
 
-* Different surveys (one for each entity)
+## Compatibilidade
 
-* Multiple questions with three types: 
-    - Yes / No dropdown list
-    - Text box - Text box
-    - Note: It will be possible to configure the total number of stars.
+- **GLPI**: 11.0 - 12.0
+- **Versão do Plugin**: 1.7.2
 
-* This plugin will allow you to add all the questions configured in the plugin with the two questions of the GLPI core in the satisfaction survey.
+## Instalação
 
-* This plugin will add two new tags to the notifications for "Satisfaction survey" and "Satisfaction survey answer" events.
-  - The tag "##satisfaction. question##" will allow you to add the list of questions of the plugin.
-  - The tag "##satisfaction. answer##" will allow you to add the list of questions and answers of the plugin.
-  
-  Translations
-  ------------
-  
-  Join us on [Transifex](https://www.transifex.com/InfotelGLPI/GLPI_satisfaction)
+### Via Docker
 
-  ------------------------------------------------------------------------------------------------------------------------
+```bash
+# Copiar plugin para o container
+docker cp . <nome-container-glpi>:/var/www/glpi/plugins/satisfaction
 
-Introduction
-============
+# Ajustar permissões
+docker exec -u root <nome-container-glpi> chown -R www-data:www-data /var/www/glpi/plugins/satisfaction
+```
 
-Ce plugin étend l'enquête de satisfaction de GLPI.
+### Instalação Manual
 
-Satisfaction est un plugin qui vous permet d'ajouter des questions à l'enquête de satisfaction.
+1. Extrair o plugin na pasta `/var/www/glpi/plugins/satisfaction`
+2. Ajustar permissões: `chown -R www-data:www-data /var/www/glpi/plugins/satisfaction`
+3. Acessar GLPI → **Configurar** → **Plugins**
+4. Clicar em **Instalar** e depois **Ativar**
 
-Fonctionnalités
---------
+## Configuração
 
-* Différents questionnaires (un pour chaque entité)
+### 1. Criar uma Pesquisa
 
-* Questions multiples avec trois types de questions : 
-    - Liste déroulante Oui / Non
-    - Zone de texte 
-    - Note : Il sera possible de configurer la nombre total d’étoiles.
+1. Acesse: **Administração** → **More satisfaction**
+2. Clique em **Adicionar**
+3. Configure:
+   - **Nome**: Nome da pesquisa
+   - **Entidade**: Selecione a entidade
+   - **Ativo**: Sim
+   - **Recursivo**: Sim/Não (para entidades filhas)
 
-* Ce plugin va permettre d’ajouter l’ensemble des questions configurés dans le plugin avec les deux questions du cœur de GLPI.
+⚠️ **Importante**: Apenas UMA pesquisa ativa por entidade é permitida.
 
-* Ce plugin va ajouter deux nouvelles balises dans les notifications concernant les événements « Enquête de satisfaction » et « Réponse à l’enquête de satisfaction ».
-   - La balise « ##satisfaction.question## » va permettre d’ajouter la liste des questions du plugin.
-   - La balise « ##satisfaction.answer## » va permettre d’ajouter la liste des questions et réponses du plugin.
+### 2. Adicionar Perguntas
+
+1. Na pesquisa criada, vá na aba **"Questions"**
+2. Clique em **"Add a question"**
+3. Configure cada pergunta:
+   - **Pergunta**: Texto da pergunta
+   - **Tipo**: Sim/Não, Texto ou Nota (estrelas)
+   - **Comentário**: Descrição opcional
+   - Para tipo "Nota": configure o número de estrelas (2-10)
+
+### 3. Configurar Permissões
+
+1. Vá em: **Administração** → **Perfis**
+2. Selecione o perfil desejado
+3. Vá na aba **"More satisfaction"**
+4. Marque as permissões apropriadas
+
+## Uso
+
+Quando um chamado é fechado e a pesquisa de satisfação é enviada:
+
+1. O usuário recebe o link da pesquisa por e-mail
+2. Ao acessar, verá as perguntas nativas do GLPI + as perguntas extras configuradas
+3. As respostas são salvas automaticamente ao clicar em "Save"
+4. As respostas podem ser visualizadas na aba "Answers" da pesquisa
+
+## Tags para Notificações
+
+O plugin adiciona duas tags personalizadas para notificações:
+
+- `##satisfaction.question##`: Lista todas as perguntas extras
+- `##satisfaction.answer##`: Lista todas as perguntas e respostas
+
+## Alterações para GLPI 11
+
+Este plugin foi atualizado para funcionar corretamente com o GLPI 11, incluindo:
+
+- ✅ Suporte à interface simplificada (self-service/helpdesk)
+- ✅ Hooks modernos (`pre_item_form` e `post_item_form`)
+- ✅ Formatação responsiva compatível com Bootstrap 5/Tabler
+- ✅ JavaScript carregado em ambas as interfaces
+
+## Desenvolvimento
+
+### Estrutura de Arquivos
+
+```
+satisfaction/
+├── src/
+│   ├── Survey.php              # Gerenciamento de pesquisas
+│   ├── SurveyQuestion.php      # Gerenciamento de perguntas
+│   ├── SurveyAnswer.php        # Exibição e salvamento de respostas
+│   ├── SurveyTranslation.php   # Traduções
+│   └── ...
+├── front/                      # Páginas de interface
+├── ajax/                       # Endpoints AJAX
+├── install/                    # Scripts de instalação/atualização
+├── locales/                    # Arquivos de tradução
+├── setup.php                   # Configuração e hooks do plugin
+└── hook.php                    # Funções de instalação/desinstalação
+```
+
+### Banco de Dados
+
+O plugin cria as seguintes tabelas:
+
+- `glpi_plugin_satisfaction_surveys`: Pesquisas
+- `glpi_plugin_satisfaction_surveyquestions`: Perguntas
+- `glpi_plugin_satisfaction_surveyanswers`: Respostas dos usuários
+- `glpi_plugin_satisfaction_surveytranslations`: Traduções
+- `glpi_plugin_satisfaction_surveyreminders`: Lembretes automáticos
+
+## Licença
+
+GPLv2+
+
+## Autores
+
+- [Infotel](https://blogglpi.infotel.com)
+- Xavier CAILLAUD
+
+## Links
+
+- [GitHub](https://github.com/pluginsGLPI/satisfaction)
+- [Transifex](https://www.transifex.com/InfotelGLPI/GLPI_satisfaction) (Traduções)

@@ -69,6 +69,10 @@ function plugin_init_satisfaction()
             $PLUGIN_HOOKS['pre_item_form']['satisfaction'] = [
                 SurveyAnswer::class, 'displaySatisfaction'];
 
+            // Hook POST_ITEM_FORM para GLPI 11 (interface simplificada)
+            $PLUGIN_HOOKS['post_item_form']['satisfaction'] = [
+                SurveyAnswer::class, 'displaySatisfaction'];
+
             $PLUGIN_HOOKS['pre_item_update']['satisfaction'][TicketSatisfaction::class] = [
                 SurveyAnswer::class, 'preUpdateSatisfaction'];
 
@@ -85,10 +89,8 @@ function plugin_init_satisfaction()
                 $PLUGIN_HOOKS["menu_toadd"]['satisfaction'] = ['admin' => Menu::class];
             }
 
-            if (isset($_SESSION['glpiactiveprofile']['interface'])
-             && $_SESSION['glpiactiveprofile']['interface'] == 'central') {
-                $PLUGIN_HOOKS[Hooks::ADD_JAVASCRIPT]['satisfaction'] = ["satisfaction.js"];
-            }
+            // Carregar JavaScript em ambas as interfaces (central e helpdesk)
+            $PLUGIN_HOOKS[Hooks::ADD_JAVASCRIPT]['satisfaction'] = ["satisfaction.js"];
             if (class_exists(MydashboardMenu::class)) {
                 $PLUGIN_HOOKS['mydashboard']['satisfaction'] = [Dashboard::class];
             }

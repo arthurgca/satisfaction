@@ -236,16 +236,22 @@ class SurveyAnswer extends CommonDBChild
      */
     public static function showResponsiveSurvey(CommonGLPI $item, $preview = false)
     {
+        error_log("SATISFACTION PLUGIN: showResponsiveSurvey START");
+        
         //find existing answer
         $sanswer_obj = new self();
 
         if ($item instanceof TicketSatisfaction) {
             if ($sanswer_obj->getFromDBByCrit(["ticketsatisfactions_id" => $item->getField('id')])) {
+                error_log("SATISFACTION PLUGIN: Found existing SurveyAnswer record");
+                error_log("SATISFACTION PLUGIN: SurveyAnswer fields: " . print_r($sanswer_obj->fields, true));
+                
                 $survey = new Survey();
                 $survey->getFromDB($sanswer_obj->fields['plugin_satisfaction_surveys_id']);
 
                 $plugin_satisfaction_surveys_id = $survey->getID();
             } else {
+                error_log("SATISFACTION PLUGIN: No existing SurveyAnswer, getting survey for entity");
                 $ticket = new Ticket();
                 $ticket->getFromDB($item->getField('tickets_id'));
                 $entities_id = Session::getActiveEntity();
@@ -257,40 +263,43 @@ class SurveyAnswer extends CommonDBChild
         } elseif ($item instanceof Survey) {
             $plugin_satisfaction_surveys_id = $item->getID();
         } else {
+            error_log("SATISFACTION PLUGIN: Item is not TicketSatisfaction or Survey");
             return false;
         }
 
         if (!isset($plugin_satisfaction_surveys_id)
           || $plugin_satisfaction_surveys_id === false) {
+            error_log("SATISFACTION PLUGIN: No survey found for entity");
             return false;
         }
 
+        error_log("SATISFACTION PLUGIN: Survey ID = " . $plugin_satisfaction_surveys_id);
+
         if (!empty($sanswer_obj->fields['answer'])) {
+            error_log("SATISFACTION PLUGIN: Found existing answers: " . $sanswer_obj->fields['answer']);
             $dbu = new DbUtils();
             //get answer in array form
             $sanswer_obj->fields['answer'] = $dbu->importArrayFromDB($sanswer_obj->fields['answer']);
+            error_log("SATISFACTION PLUGIN: Answers after import: " . print_r($sanswer_obj->fields['answer'], true));
+        } else {
+            error_log("SATISFACTION PLUGIN: No existing answers found");
         }
 
         echo Html::hidden('plugin_satisfaction_surveys_id', ['value' => $plugin_satisfaction_surveys_id]);
 
         //list survey questions
         $squestion_obj = new SurveyQuestion();
-        foreach ($squestion_obj->find([
-            SurveyQuestion::$items_id => $plugin_satisfaction_surveys_id]) as $question) {
-            echo "<div class=\"form-row\">";
-
+        $questions = $squestion_obj->find([SurveyQuestion::$items_id => $plugin_satisfaction_surveys_id]);
+        
+        error_log("SATISFACTION PLUGIN: Found " . count($questions) . " questions");
+        
+        foreach ($questions as $question) {
             $name = $question['name'];
             if (SurveyTranslation::hasTranslation($question[
                 "plugin_satisfaction_surveys_id"], $question["id"])) {
                 $name = SurveyTranslation::getTranslation($question[
                     "plugin_satisfaction_surveys_id"], $question["id"]);
             }
-
-            echo "<div class=\"form-group col-md-11\">";
-            echo nl2br($name);
-            echo "</div>";
-
-            echo "<div class=\"form-group col-md-11\">";
 
             if (isset($sanswer_obj->fields['answer'][$question['id']])) {
                 $value = $sanswer_obj->fields['answer'][$question['id']];
@@ -303,11 +312,19 @@ class SurveyAnswer extends CommonDBChild
                     $value = 0;
                 }
             }
+
+            // Usar estrutura HTML EXATA do GLPI 11
+            echo "<div class='form-field row align-items-center col-12 glpi-full-width mb-2'>";
+            echo "<label class='col-form-label col-xxl-5 text-xxl-end'>";
+            echo htmlspecialchars($name);
+            echo "</label>";
+            echo "<div class='col-xxl-7 field-container'>";
             self::displayAnswer($question, $value);
             echo "</div>";
-
             echo "</div>";
         }
+        
+        error_log("SATISFACTION PLUGIN: showResponsiveSurvey END");
     }
 
     /**
@@ -403,24 +420,29 @@ class SurveyAnswer extends CommonDBChild
      */
     public static function preUpdateSatisfaction(TicketSatisfaction $ticketSatisfaction)
     {
+        error_log("SATISFACTION PLUGIN: preUpdateSatisfaction called");
+        error_log("SATISFACTION PLUGIN: Input data: " . print_r($ticketSatisfaction->input, true));
 
         $surveyanswer = new self();
         $dbu          = new DbUtils();
         if ($surveyanswer->getFromDBByCrit(["ticketsatisfactions_id" => $ticketSatisfaction->getField('id')])) {
+            error_log("SATISFACTION PLUGIN: Updating existing answer");
             $input = ['id'     => $surveyanswer->getID(),
-                'answer' => addslashes($dbu->exportArrayToDB($ticketSatisfaction->input['answer']))];
+                'answer' => $dbu->exportArrayToDB($ticketSatisfaction->input['answer'])];
 
             $surveyanswer->update($input);
         } else {
+            error_log("SATISFACTION PLUGIN: Creating new answer");
             if (isset($ticketSatisfaction->input['plugin_satisfaction_surveys_id'])) {
                 $input = ['plugin_satisfaction_surveys_id' => $ticketSatisfaction->input[
                  'plugin_satisfaction_surveys_id'],
                     'ticketsatisfactions_id'         => $ticketSatisfaction->getField('id'),
-                    'answer'                         => addslashes(
-                        $dbu->exportArrayToDB($ticketSatisfaction->input['answer'])
-                    )];
+                    'answer'                         => $dbu->exportArrayToDB($ticketSatisfaction->input['answer'])];
 
                 $surveyanswer->add($input);
+                error_log("SATISFACTION PLUGIN: Answer created");
+            } else {
+                error_log("SATISFACTION PLUGIN: No survey ID in input");
             }
         }
     }
@@ -435,12 +457,34 @@ class SurveyAnswer extends CommonDBChild
      */
     public static function displaySatisfaction($params)
     {
-
+        // Debug: Log para rastrear chamadas
+        error_log("SATISFACTION PLUGIN: displaySatisfaction called");
+        error_log("SATISFACTION PLUGIN: Interface = " . ($_SESSION['glpiactiveprofile']['interface'] ?? 'unknown'));
+        
         if (isset($params['item'])) {
             $item = $params['item'];
+            error_log("SATISFACTION PLUGIN: Item type = " . $item->getType());
+            
             if ($item->getType() == 'TicketSatisfaction') {
-                self::showSurvey($item);
+                // Detectar se está na interface simplificada (helpdesk/self-service)
+                $is_helpdesk = false;
+                if (isset($_SESSION['glpiactiveprofile']['interface'])) {
+                    $is_helpdesk = ($_SESSION['glpiactiveprofile']['interface'] == 'helpdesk');
+                }
+                
+                error_log("SATISFACTION PLUGIN: is_helpdesk = " . ($is_helpdesk ? 'true' : 'false'));
+                
+                // Usar o método apropriado baseado na interface
+                if ($is_helpdesk) {
+                    error_log("SATISFACTION PLUGIN: Calling showResponsiveSurvey");
+                    self::showResponsiveSurvey($item);
+                } else {
+                    error_log("SATISFACTION PLUGIN: Calling showSurvey");
+                    self::showSurvey($item);
+                }
             }
+        } else {
+            error_log("SATISFACTION PLUGIN: No item in params");
         }
     }
 
