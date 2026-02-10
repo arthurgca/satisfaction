@@ -65,10 +65,7 @@ function plugin_init_satisfaction()
                 Profile::class,
                 ['addtabon' => Profile::class]
             );
-
-            // $PLUGIN_HOOKS['pre_item_form']['satisfaction'] = [
-            //    SurveyAnswer::class, 'displaySatisfaction'];
-
+            
             // Hook POST_ITEM_FORM para GLPI 11 (interface simplificada)
             $PLUGIN_HOOKS['post_item_form']['satisfaction'] = [
                 SurveyAnswer::class, 'displaySatisfaction'];
