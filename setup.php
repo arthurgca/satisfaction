@@ -42,7 +42,7 @@ use GlpiPlugin\Satisfaction\Profile;
 use GlpiPlugin\Satisfaction\Reminder;
 use GlpiPlugin\Satisfaction\SurveyAnswer;
 
-define("PLUGIN_SATISFACTION_VERSION", "1.7.2");
+define("PLUGIN_SATISFACTION_VERSION", "1.7.3");
 
 // Minimal GLPI version, inclusive
 define('PLUGIN_SATISFACTION_MIN_GLPI', '11.0');
@@ -94,8 +94,12 @@ function plugin_init_satisfaction()
         }
 
         $PLUGIN_HOOKS['item_get_datas']['satisfaction'] = [
-            NotificationTargetTicket::class => [SurveyAnswer::class,
+            'NotificationTargetTicket' => [SurveyAnswer::class,
          'addNotificationDatas']];
+
+        $PLUGIN_HOOKS['item_get_tags']['satisfaction'] = [
+            'NotificationTargetTicket' => [SurveyAnswer::class,
+         'addNotificationTags']];
     }
 }
 

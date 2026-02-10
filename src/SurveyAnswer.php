@@ -270,7 +270,7 @@ class SurveyAnswer extends CommonDBChild
             $dbu = new DbUtils();
             //get answer in array form
             $sanswer_obj->fields['answer'] = $dbu->importArrayFromDB($sanswer_obj->fields['answer']);
-        } else {
+        }
 
         echo Html::hidden('plugin_satisfaction_surveys_id', ['value' => $plugin_satisfaction_surveys_id]);
 
@@ -455,14 +455,33 @@ class SurveyAnswer extends CommonDBChild
     }
 
     /**
+     * Register satisfaction tags in GLPI notification system
+     *
+     * @param \NotificationTargetTicket $target
+     */
+    public static function addNotificationTags(\NotificationTargetTicket $target)
+    {
+        $target->addTagToList([
+            'tag'   => 'satisfaction.question',
+            'label' => __('Satisfaction questions', 'satisfaction'),
+            'value' => true,
+            'events' => ['satisfaction', 'replysatisfaction'],
+        ]);
+        $target->addTagToList([
+            'tag'   => 'satisfaction.answer',
+            'label' => __('Satisfaction answers', 'satisfaction'),
+            'value' => true,
+            'events' => ['satisfaction', 'replysatisfaction'],
+        ]);
+    }
+
+    /**
      * Adding two tags to satisfaction notifications
      *
      * @param \NotificationTarget $target
      */
-    public static function addNotificationDatas(NotificationTargetTicket $target)
+    public static function addNotificationDatas(\NotificationTargetTicket $target)
     {
-
-        $event = $target->raiseevent;
         if (isset($target->obj->fields['id'])) {
             $tickets_id  = $target->obj->fields['id'];
             $entities_id = $target->obj->fields['entities_id'];
@@ -487,35 +506,30 @@ class SurveyAnswer extends CommonDBChild
                     $questions     = $squestion_obj->find([
                         SurveyQuestion::$items_id => $plugin_satisfaction_surveys_id]);
 
-                    switch ($event) {
-                        case 'satisfaction':
-                            $data = '';
-                            foreach ($questions as $question) {
-                                $data .= $question['name'] . "\n\n";
-                            }
-                            $target->data['##satisfaction.question##'] = $data;
-                            break;
-
-                        case 'replysatisfaction':
-                            $data = '';
-                            foreach ($questions as $question) {
-                                if (isset($sanswer_obj->fields['answer'][$question['id']])) {
-                                    $value = $sanswer_obj->fields['answer'][$question['id']];
-                                } else {
-                                    if ($question['type'] == SurveyQuestion::TEXTAREA) {
-                                        $value = '';
-                                    } elseif ($question['type'] == SurveyQuestion::NOTE) {
-                                        $value = $question['default_value'];
-                                    } else {
-                                        $value = 0;
-                                    }
-                                }
-                                $data .= $question['name'] . " : " . self::getAnswer($question, $value) . "\n\n";
-                            }
-                            $target->data['##satisfaction.answer##'] = $data;
-
-                            break;
+                    // Montar lista de perguntas (disponível em ambos os eventos)
+                    $questionData = '';
+                    foreach ($questions as $question) {
+                        $questionData .= $question['name'] . "\n\n";
                     }
+                    $target->data['##satisfaction.question##'] = $questionData;
+
+                    // Montar lista de perguntas + respostas
+                    $answerData = '';
+                    foreach ($questions as $question) {
+                        if (isset($sanswer_obj->fields['answer'][$question['id']])) {
+                            $value = $sanswer_obj->fields['answer'][$question['id']];
+                        } else {
+                            if ($question['type'] == SurveyQuestion::TEXTAREA) {
+                                $value = '';
+                            } elseif ($question['type'] == SurveyQuestion::NOTE) {
+                                $value = $question['default_value'];
+                            } else {
+                                $value = 0;
+                            }
+                        }
+                        $answerData .= $question['name'] . " : " . self::getAnswer($question, $value) . "\n\n";
+                    }
+                    $target->data['##satisfaction.answer##'] = $answerData;
                 }
             }
         }
