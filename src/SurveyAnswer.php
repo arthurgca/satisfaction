@@ -509,7 +509,7 @@ class SurveyAnswer extends CommonDBChild
                     // Montar lista de perguntas (disponível em ambos os eventos)
                     $questionData = '';
                     foreach ($questions as $question) {
-                        $questionData .= $question['name'] . "\n\n";
+                        $questionData .= $question['name'] . "<br><br>";
                     }
                     $target->data['##satisfaction.question##'] = $questionData;
 
@@ -527,7 +527,7 @@ class SurveyAnswer extends CommonDBChild
                                 $value = 0;
                             }
                         }
-                        $answerData .= $question['name'] . " : " . self::getAnswer($question, $value) . "\n\n";
+                        $answerData .= "<b>" . $question['name'] . "</b>: " . self::getAnswer($question, $value) . "<br><br>";
                     }
                     $target->data['##satisfaction.answer##'] = $answerData;
                 }

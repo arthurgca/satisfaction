@@ -183,3 +183,8 @@ GPLv2+
 - **Correção de Erro de Sintaxe em `showResponsiveSurvey`** (v1.7.3):
   - Corrigido um bloco `else` com chave desbalanceada no método `showResponsiveSurvey` de `SurveyAnswer.php`, que causava erro 500 (Internal Server Error) ao acessar a aba de pesquisa.
   - Removido código comentado do hook `pre_item_form` em `setup.php`.
+
+- **Correção de Quebra de Linha em Notificações** (v1.7.3):
+  - Corrigido o formato das tags de notificação `##satisfaction.question##` e `##satisfaction.answer##`.
+  - **Problema**: Em emails HTML, o caractere de nova linha `\n` era ignorado, resultando em textos sem formatação.
+  - **Solução**: Substituído `\n` por tags HTML `<br>` para garantir a quebra de linha visual correta nos clientes de email.
